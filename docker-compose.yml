@@ -1,10 +1,8 @@
 services:
   postgres_db:
-    build:
-      ./postgres
-    container_name: ${POSTGRES_CONTAINER_NAME}
-    env_file:
-      - .env
+    build: ./postgres
+    container_name: postgres_db
+    env_file: .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -13,23 +11,36 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./config:/opt/config
+    networks:
+      - etl-network
+
+  data_generator:
+    build: ./data_generator
+    container_name: data_generator
+    env_file: .env
+    volumes:
+      - ./config:/app/config
+    depends_on:
+      - postgres_db
     networks:
       - etl-network
 
   airflow:
-    build:
-      ./airflow
+    build: ./airflow
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db:5432/${POSTGRES_DB}
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
       AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      AIRFLOW_VAR_POSTGRES_DB: ${POSTGRES_DB}
+      AIRFLOW_VAR_POSTGRES_USER: ${POSTGRES_USER}
+      AIRFLOW_VAR_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      AIRFLOW_VAR_POSTGRES_PORT: ${POSTGRES_PORT}
+      AIRFLOW_VAR_POSTGRES_HOST: postgres_db
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./config:/opt/airflow/config
-      - ./postgres/data_generator.py:/opt/airflow/data_generator.py
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "${AIRFLOW_PORT}:8080"
     command: airflow standalone
@@ -43,4 +54,5 @@ volumes:
 
 networks:
   etl-network:
+    name: user-segments-etl-pipeline_etl-network
     driver: bridge

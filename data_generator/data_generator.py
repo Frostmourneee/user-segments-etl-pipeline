@@ -1,4 +1,4 @@
-from config.settings import get_settings
+import os
 import psycopg2
 import random
 from datetime import datetime
@@ -6,14 +6,14 @@ from faker import Faker
 
 
 def generate_data():
-    settings = get_settings()
-    conn = psycopg2.connect(
-        dbname=settings.POSTGRES_DB,
-        user=settings.POSTGRES_USER,
-        password=settings.POSTGRES_PASSWORD,
-        host=settings.POSTGRES_CONTAINER_NAME,
-        port=settings.POSTGRES_PORT
-    )
+    db_config = {
+        'dbname': os.getenv('POSTGRES_DB'),
+        'user': os.getenv('POSTGRES_USER'),
+        'password': os.getenv('POSTGRES_PASSWORD'),
+        'host': os.getenv('POSTGRES_HOST', 'postgres_db'),
+        'port': os.getenv('POSTGRES_PORT', '5432')
+    }
+    conn = psycopg2.connect(**db_config)
     cursor = conn.cursor()
 
     fake = Faker()
