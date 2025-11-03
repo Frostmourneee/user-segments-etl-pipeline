@@ -38,7 +38,36 @@ services:
     command: airflow standalone
     depends_on:
       - postgres_db
-      - data_generator
+    networks:
+      - etl-network
+
+  spark:
+    image: apache/spark:3.5.0
+    build: ./spark
+    container_name: spark
+    env_file: .env
+    environment:
+      - SPARK_MODE=master
+    volumes:
+      - ./spark/scripts:/opt/spark/scripts
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master"]
+    ports:
+      - "${SPARK_UI_PORT}:8080"  # Spark UI
+      - "${SPARK_MASTER_PORT}:7077"  # Spark master
+    networks:
+      - etl-network
+
+  spark-worker:
+    image: apache/spark:3.5.0
+    build: ./spark
+    container_name: spark-worker
+    env_file: .env
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark:7077"]
+    depends_on:
+      - spark
     networks:
       - etl-network
 
