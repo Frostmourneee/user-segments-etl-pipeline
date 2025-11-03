@@ -19,11 +19,17 @@ help: ##@Help Show this help
 	@echo -e "Usage: make [target] ...\n"
 	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 
-env:  ##@Environment Create .env file with variables
+env: ##@Environment Create .env file with variables
 	cat example.env > .env
 
-up:
+up: ##@Docker Start all containers
 	docker compose up --build -d
 
-down:
+down: ##@Docker Stop all containers
 	docker compose down
+
+psql: ##@Database Connect to PostgreSQL database via psql util
+	docker exec -it postgres_db psql -U $(POSTGRES_USER) -d $(POSTGRES_DB)
+
+gen_data: ##@Database Generate test data
+	docker exec postgres_db /opt/venv/bin/python /opt/data_generator.py
