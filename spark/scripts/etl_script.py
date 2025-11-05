@@ -29,7 +29,7 @@ def main():
         .groupBy("user_id") \
         .agg(
         count("order_id").alias("total_orders"),
-        sum("amount").alias("total_revenue"),
+        sum("amount").alias("total_income"),
         max("order_date").alias("last_order_date")
     )
 
@@ -45,12 +45,12 @@ def main():
                  .join(user_orders, "user_id", "left")
                  .join(user_activity_agg, "user_id", "left")
                  .withColumn("total_orders", coalesce(col("total_orders"), lit(0)))
-                 .withColumn("total_revenue", coalesce(col("total_revenue"), lit(0)))
+                 .withColumn("total_income", coalesce(col("total_income"), lit(0)))
                  .withColumn("last_activity_date", to_date(col("last_activity_date")))
                  .withColumn("calculation_date", current_date())
                  .withColumn("segment_name",
                              when(col("total_orders") >= 10, "vip")
-                             .when((col("total_orders") >= 5) & (col("total_revenue") >= 500), "loyal")
+                             .when((col("total_orders") >= 5) & (col("total_income") >= 500), "loyal")
                              .when(col("total_orders") >= 3, "active")
                              .when(datediff(current_date(), col("registration_date")) <= 30, "new")
                              .when(datediff(current_date(), col("last_order_date")) > 90, "churned")
@@ -63,7 +63,7 @@ def main():
 
     # А marketing_mart — почти весь full_mart
     marketing_mart = full_mart.select(
-        "user_id", "segment_name", "total_orders", "total_revenue",
+        "user_id", "segment_name", "total_orders", "total_income",
         "last_activity_date", "calculation_date"
     )
 

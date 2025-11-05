@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS analytics.marketing_mart (
     user_id INTEGER NOT NULL,
     segment_name VARCHAR(100) NOT NULL,
     total_orders INTEGER NOT NULL,
-    total_revenue DECIMAL(15,2) NOT NULL,
+    total_income DECIMAL(15,2) NOT NULL,
     last_activity_date DATE,
     calculation_date DATE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
